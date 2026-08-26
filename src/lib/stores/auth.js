@@ -101,7 +101,7 @@ export const authStore = {
         
         const { data } = await supabase.auth.getSession();
         currentUser.set(data?.session?.user || null);
-        goto('/dashboard'); 
+        goto('/'); 
     },
 
     reset: () => {
