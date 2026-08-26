@@ -13,7 +13,8 @@
     });
 
     function getInitials(name) {
-        return name ? name.split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase() : "--";
+        if (!name) return "AL"; // Fallback initials
+        return name.split(" ").map(x => x[0]).slice(0, 2).join("").toUpperCase();
     }
 </script>
 
@@ -25,8 +26,8 @@
     </div>
     <div class="top-actions">
         <button class="profile-btn">
-            <div class="avatar small">{getInitials($userProfile.name)}</div>
-            <span>{$userProfile.name}</span><b>⌄</b>
+            <div class="avatar small">{getInitials($userProfile?.username || $userProfile?.name)}</div>
+            <span>{$userProfile?.username || $userProfile?.name || 'Alumni'}</span><b>⌄</b>
         </button>
     </div>
 </header>

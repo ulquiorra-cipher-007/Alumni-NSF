@@ -3,6 +3,7 @@
     import Topbar from '$lib/components/Topbar.svelte';
     import { dataStore } from '$lib/stores/data.js';
     import { supabase } from '$lib/supabase.js';
+    import { goto } from '$app/navigation';
     import { onMount, onDestroy } from 'svelte';
 
     let { children } = $props();
@@ -13,15 +14,22 @@
     let sessionInterval;
 
     onMount(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Route Guard: Kick unauthenticated users back to login instantly
+        if (!session) {
+            goto('/login');
+            return;
+        }
+
+        // FETCH THE ACTUAL USER PROFILE DATA
+        await dataStore.fetchUserProfile(session.user);
         await dataStore.fetchAlumniData();
         await dataStore.fetchEventsData();
 
         // Poll the database/sessions table to check if a new device is requesting approval
         sessionInterval = setInterval(async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) return;
-
                 // Check for pending sessions waiting for approval
                 const { data, error } = await supabase
                     .from('user_sessions')

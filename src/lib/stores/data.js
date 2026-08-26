@@ -4,7 +4,7 @@ import { supabase } from '$lib/supabase.js';
 // Global state mimicking your vanilla JS arrays
 export const alumniList = writable([]);
 export const eventsList = writable([]);
-export const userProfile = writable({ name: 'Administrator', role: 'Admin' });
+export const userProfile = writable(null);
 
 export const dataStore = {
     fetchUserProfile: async (user) => {
