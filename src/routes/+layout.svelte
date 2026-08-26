@@ -1,37 +1,60 @@
 <script>
+    import { authStore } from '$lib/stores/auth.js';
     import '../app.css';
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import { supabase } from '$lib/supabase.js';
-    import { currentUser, authStatus } from '$lib/stores/auth.js';
-    import { dataStore } from '$lib/stores/data.js';
 
-    let { children } = $props();
-    let mounted = $state(false);
+    let isBlurred = $state(false);
+    let idleTimer;
+    
+    // 30 minutes in milliseconds
+    const IDLE_TIMEOUT = 30 * 60 * 1000; 
 
-    onMount(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
+    function handleVisibilityChange() {
+        isBlurred = document.hidden;
+    }
+
+    function resetTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+            authStore.logout();
+        }, IDLE_TIMEOUT);
+    }
+
+    $effect(() => {
+        // Mount visibility and activity listeners
+        document.addEventListener('visibilitychange', handleVisibilityChange);
         
-        if (session) {
-            currentUser.set(session.user);
-            authStatus.set('ACTIVE');
-            await dataStore.fetchUserProfile(session.user);
-        } else if (window.location.pathname !== '/login') {
-            goto('/login');
-        }
+        const activityEvents = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+        activityEvents.forEach(event => document.addEventListener(event, resetTimer));
 
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!session && window.location.pathname !== '/login') {
-                goto('/login');
-            } else if (session && event === 'SIGNED_IN') {
-                await dataStore.fetchUserProfile(session.user);
-            }
-        });
+        // Initialize the timer on first load
+        resetTimer();
 
-        mounted = true;
+        return () => {
+            // Cleanup on destroy
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            activityEvents.forEach(event => document.removeEventListener(event, resetTimer));
+            clearTimeout(idleTimer);
+        };
     });
 </script>
 
-{#if mounted}
-    {@render children()}
-{/if}
+<div class="app-security-wrapper" class:is-blurred={isBlurred}>
+    <slot />
+</div>
+
+<style>
+    .app-security-wrapper {
+        min-height: 100vh;
+        transition: filter 0.3s ease-out;
+    }
+
+    /* 
+      Heavy blur and grayscale to obscure sensitive directory info 
+      Pointer events disabled to prevent blind interactions
+    */
+    .is-blurred {
+        filter: blur(12px) grayscale(80%);
+        pointer-events: none;
+        user-select: none;
+    }
+</style>

@@ -19,10 +19,13 @@ export const authStore = {
         try {
             const deviceId = getDeviceId();
             const deviceDetails = getDeviceDetails();
+            
+            // Flag to tell the backend to skip the pending device phase for brand new accounts
+            const bypass_approval = action === 'signup';
 
             // 1. Invoking your actual 'login' edge function with the exact payload
             const { data, error } = await supabase.functions.invoke('login', {
-                body: { action, username, password, specialKey, deviceId, deviceDetails }
+                body: { action, username, password, specialKey, deviceId, deviceDetails, bypass_approval }
             });
 
             // 2. Your exact custom error parsing logic
