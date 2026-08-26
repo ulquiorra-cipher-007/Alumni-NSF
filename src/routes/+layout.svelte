@@ -2,6 +2,8 @@
     import { authStore } from '$lib/stores/auth.js';
     import '../app.css';
 
+    let { children } = $props();
+
     let isBlurred = $state(false);
     let idleTimer;
     
@@ -20,17 +22,14 @@
     }
 
     $effect(() => {
-        // Mount visibility and activity listeners
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
         const activityEvents = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
         activityEvents.forEach(event => document.addEventListener(event, resetTimer));
 
-        // Initialize the timer on first load
         resetTimer();
 
         return () => {
-            // Cleanup on destroy
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             activityEvents.forEach(event => document.removeEventListener(event, resetTimer));
             clearTimeout(idleTimer);
@@ -39,7 +38,7 @@
 </script>
 
 <div class="app-security-wrapper" class:is-blurred={isBlurred}>
-    <slot />
+    {@render children()}
 </div>
 
 <style>
@@ -48,10 +47,6 @@
         transition: filter 0.3s ease-out;
     }
 
-    /* 
-      Heavy blur and grayscale to obscure sensitive directory info 
-      Pointer events disabled to prevent blind interactions
-    */
     .is-blurred {
         filter: blur(12px) grayscale(80%);
         pointer-events: none;
