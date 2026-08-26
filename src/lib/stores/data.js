@@ -4,7 +4,9 @@ import { supabase } from '$lib/supabase.js';
 // Global state mimicking your vanilla JS arrays
 export const alumniList = writable([]);
 export const eventsList = writable([]);
-export const userProfile = writable(null);
+
+// THE FIX: Initialize with a safe empty object instead of null to prevent render crashes
+export const userProfile = writable({ name: '', role: 'Member' });
 
 export const dataStore = {
     fetchUserProfile: async (user) => {
